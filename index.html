@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinamik Pusula</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1a1a1a, #2c2c2c);
+            font-family: Arial, sans-serif;
+        }
+
+        .compass-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .compass {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(#333, #111);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .direction-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .direction {
+            position: absolute;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .north { top: 10px; left: 50%; transform: translateX(-50%); }
+        .south { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        .east { right: 10px; top: 50%; transform: translateY(-50%); }
+        .west { left: 10px; top: 50%; transform: translateY(-50%); }
+
+        .needle-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.1s linear;
+        }
+
+        .needle {
+            width: 8px;
+            height: 120px;
+            background: linear-gradient(to bottom, #ff4444 50%, #ffffff 50%);
+            border-radius: 4px;
+        }
+
+        .center-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ffd700;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: -80px;
+            display: flex;
+            gap: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="compass-container">
+        <div class="compass">
+            <div class="direction-labels">
+                <div class="direction north">N</div>
+                <div class="direction south">S</div>
+                <div class="direction east">E</div>
+                <div class="direction west">W</div>
+            </div>
+            <div class="needle-container">
+                <div class="needle"></div>
+            </div>
+            <div class="center-dot"></div>
+        </div>
+        <div class="controls">
+            <button onclick="toggleRotation('right')">Sağa Dön</button>
+            <button onclick="toggleRotation('left')">Sola Dön</button>
+            <button onclick="stopRotation()">Durdur</button>
+        </div>
+    </div>
+
+    <script>
+        let rotationInterval;
+        let currentRotation = 0;
+        let currentDirection = 'right';
+        const needleContainer = document.querySelector('.needle-container');
+
+        function setRotationSpeed(speed) {
+            needleContainer.style.transition = `transform ${speed}s linear`;
+        }
+
+        function rotate(angle) {
+            currentRotation += angle;
+            needleContainer.style.transform = `rotate(${currentRotation}deg)`;
+        }
+
+        function startRotationSequence(direction) {
+            const totalRotation = direction === 'right' ? 360 : -360;
+            
+            // Hızlı dönüş (2 saniye)
+            setRotationSpeed(2);
+            rotate(totalRotation * 5.0); // İlk 2 saniyede toplam dönüşün %60'ını tamamla
+            
+            // 3 saniye sonra yavaş dönüş
+            setTimeout(() => {
+                setRotationSpeed(2);
+                rotate(totalRotation * 3.0); // Kalan %40'ı 3 saniyede tamamla
+            }, 2000);
+            
+            // 5 saniye sonra durma ve 1.5 saniye bekleme
+            setTimeout(() => {
+                // Yön değiştirme ve tekrar başlama
+                setTimeout(() => {
+                    currentDirection = direction === 'right' ? 'left' : 'right';
+                    startRotationSequence(currentDirection);
+                }, 1500);
+            }, 5000);
+        }
+
+        function toggleRotation(direction) {
+            stopRotation();
+            currentDirection = direction;
+            startRotationSequence(direction);
+        }
+
+        function stopRotation() {
+            clearTimeout(rotationInterval);
+            const computedStyle = window.getComputedStyle(needleContainer);
+            const currentTransform = computedStyle.transform;
+            currentRotation = currentTransform !== 'none' 
+                ? parseInt(currentTransform.split('(')[1].split(')')[0].split(',')[0]) 
+                : 0;
+            needleContainer.style.transition = 'none';
+            needleContainer.style.transform = `rotate(${currentRotation}deg)`;
+        }
+
+        // Sayfa yüklendiğinde otomatik başlat
+        window.onload = () => {
+            toggleRotation('right');
+        };
+    </script>
+</body>
+</html>
